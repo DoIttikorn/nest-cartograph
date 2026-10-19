@@ -14,6 +14,14 @@
   ],
   "license": "MIT",
   "author": "Ittikorn Chawkamud",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DoIttikorn/nest-cartograph.git"
+  },
+  "homepage": "https://github.com/DoIttikorn/nest-cartograph#readme",
+  "bugs": {
+    "url": "https://github.com/DoIttikorn/nest-cartograph/issues"
+  },
   "type": "module",
   "bin": {
     "nest-cartograph": "dist/cli/index.js"
