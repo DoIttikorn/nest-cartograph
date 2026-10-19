@@ -1,6 +1,6 @@
 {
   "name": "nest-cartograph",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Map a NestJS app's modules, providers and injections from its source code, then explore the map in your browser.",
   "keywords": [
     "nestjs",
@@ -16,7 +16,7 @@
   "author": "Ittikorn Chawkamud",
   "type": "module",
   "bin": {
-    "nest-cartograph": "./dist/cli/index.js"
+    "nest-cartograph": "dist/cli/index.js"
   },
   "exports": {
     ".": {
@@ -47,8 +47,7 @@
     "typescript": "^6.0.3"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
