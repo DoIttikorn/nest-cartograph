@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run check:pkg
+      # Dogfood the built CLI on the fixture app: both steps, no browser.
+      - run: node dist/cli/index.js analyze -p test/fixtures/tsconfig.json -o cartograph.json --fail-on-cycles
+      - run: node dist/cli/index.js view cartograph.json -o cartograph.html
