@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.tgz
+*.tsbuildinfo
+.DS_Store
+# written by `npm run dev:ui`
+ui/public/cartograph.json
+# written by `npx nest-cartograph analyze` when trying the CLI on this repo
+/cartograph.json

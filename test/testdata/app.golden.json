@@ -1,0 +1,332 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "root": "test/fixtures",
+    "tsconfig": "tsconfig.json"
+  },
+  "nodes": [
+    {
+      "id": "app/app.controller.ts#AppController",
+      "kind": "controller",
+      "name": "AppController",
+      "file": "app/app.controller.ts",
+      "line": 5
+    },
+    {
+      "id": "app/app.module.ts#AppModule",
+      "kind": "module",
+      "name": "AppModule",
+      "file": "app/app.module.ts",
+      "line": 9
+    },
+    {
+      "id": "app/app.service.ts#AppService",
+      "kind": "provider",
+      "name": "AppService",
+      "file": "app/app.service.ts",
+      "line": 4,
+      "providerType": "class"
+    },
+    {
+      "id": "app/config/config.module.ts#ConfigModule",
+      "kind": "module",
+      "name": "ConfigModule",
+      "file": "app/config/config.module.ts",
+      "line": 5,
+      "global": true,
+      "dynamic": true
+    },
+    {
+      "id": "app/config/config.service.ts#ConfigService",
+      "kind": "provider",
+      "name": "ConfigService",
+      "file": "app/config/config.service.ts",
+      "line": 4,
+      "providerType": "class"
+    },
+    {
+      "id": "app/orders/orders.module.ts#OrdersModule",
+      "kind": "module",
+      "name": "OrdersModule",
+      "file": "app/orders/orders.module.ts",
+      "line": 6
+    },
+    {
+      "id": "app/orders/orders.service.ts#OrdersService",
+      "kind": "provider",
+      "name": "OrdersService",
+      "file": "app/orders/orders.service.ts",
+      "line": 6,
+      "providerType": "class"
+    },
+    {
+      "id": "app/shared/health.ts#HealthModule",
+      "kind": "module",
+      "name": "HealthModule",
+      "file": "app/shared/health.ts",
+      "line": 6
+    },
+    {
+      "id": "app/shared/health.ts#HealthService",
+      "kind": "provider",
+      "name": "HealthService",
+      "file": "app/shared/health.ts",
+      "line": 3,
+      "providerType": "class"
+    },
+    {
+      "id": "app/users/users.module.ts#UsersModule",
+      "kind": "module",
+      "name": "UsersModule",
+      "file": "app/users/users.module.ts",
+      "line": 6
+    },
+    {
+      "id": "app/users/users.repository.ts#UsersRepository",
+      "kind": "provider",
+      "name": "UsersRepository",
+      "file": "app/users/users.repository.ts",
+      "line": 3,
+      "providerType": "class"
+    },
+    {
+      "id": "app/users/users.service.ts#UsersService",
+      "kind": "provider",
+      "name": "UsersService",
+      "file": "app/users/users.service.ts",
+      "line": 7,
+      "providerType": "class"
+    },
+    {
+      "id": "token:AUDIT",
+      "kind": "provider",
+      "name": "AUDIT",
+      "providerType": "unknown"
+    },
+    {
+      "id": "token:CLOCK",
+      "kind": "provider",
+      "name": "CLOCK",
+      "providerType": "factory"
+    },
+    {
+      "id": "token:CONFIG_OPTIONS",
+      "kind": "provider",
+      "name": "CONFIG_OPTIONS",
+      "providerType": "value"
+    },
+    {
+      "id": "token:LEGACY_ORDERS",
+      "kind": "provider",
+      "name": "LEGACY_ORDERS",
+      "providerType": "alias"
+    },
+    {
+      "id": "token:PAYMENT_GATEWAY",
+      "kind": "provider",
+      "name": "PAYMENT_GATEWAY",
+      "providerType": "class",
+      "implementation": "FakePaymentGateway"
+    }
+  ],
+  "edges": [
+    {
+      "kind": "injects",
+      "from": "app/app.controller.ts#AppController",
+      "to": "app/app.service.ts#AppService",
+      "at": 0
+    },
+    {
+      "kind": "injects",
+      "from": "app/app.controller.ts#AppController",
+      "to": "app/shared/health.ts#HealthService",
+      "at": 1
+    },
+    {
+      "kind": "controls",
+      "from": "app/app.module.ts#AppModule",
+      "to": "app/app.controller.ts#AppController"
+    },
+    {
+      "kind": "imports",
+      "from": "app/app.module.ts#AppModule",
+      "to": "app/config/config.module.ts#ConfigModule",
+      "via": "forRoot"
+    },
+    {
+      "kind": "imports",
+      "from": "app/app.module.ts#AppModule",
+      "to": "app/orders/orders.module.ts#OrdersModule"
+    },
+    {
+      "kind": "imports",
+      "from": "app/app.module.ts#AppModule",
+      "to": "app/shared/health.ts#HealthModule"
+    },
+    {
+      "kind": "imports",
+      "from": "app/app.module.ts#AppModule",
+      "to": "app/users/users.module.ts#UsersModule"
+    },
+    {
+      "kind": "provides",
+      "from": "app/app.module.ts#AppModule",
+      "to": "app/app.service.ts#AppService"
+    },
+    {
+      "kind": "injects",
+      "from": "app/app.service.ts#AppService",
+      "to": "app/users/users.service.ts#UsersService",
+      "at": 0
+    },
+    {
+      "kind": "exports",
+      "from": "app/config/config.module.ts#ConfigModule",
+      "to": "app/config/config.service.ts#ConfigService"
+    },
+    {
+      "kind": "provides",
+      "from": "app/config/config.module.ts#ConfigModule",
+      "to": "app/config/config.service.ts#ConfigService"
+    },
+    {
+      "kind": "provides",
+      "from": "app/config/config.module.ts#ConfigModule",
+      "to": "token:CONFIG_OPTIONS"
+    },
+    {
+      "kind": "injects",
+      "from": "app/config/config.service.ts#ConfigService",
+      "to": "token:CONFIG_OPTIONS",
+      "at": 0
+    },
+    {
+      "kind": "exports",
+      "from": "app/orders/orders.module.ts#OrdersModule",
+      "to": "app/orders/orders.service.ts#OrdersService"
+    },
+    {
+      "kind": "imports",
+      "from": "app/orders/orders.module.ts#OrdersModule",
+      "to": "app/users/users.module.ts#UsersModule",
+      "forwardRef": true
+    },
+    {
+      "kind": "provides",
+      "from": "app/orders/orders.module.ts#OrdersModule",
+      "to": "app/orders/orders.service.ts#OrdersService"
+    },
+    {
+      "kind": "provides",
+      "from": "app/orders/orders.module.ts#OrdersModule",
+      "to": "token:CLOCK"
+    },
+    {
+      "kind": "provides",
+      "from": "app/orders/orders.module.ts#OrdersModule",
+      "to": "token:LEGACY_ORDERS"
+    },
+    {
+      "kind": "provides",
+      "from": "app/orders/orders.module.ts#OrdersModule",
+      "to": "token:PAYMENT_GATEWAY"
+    },
+    {
+      "kind": "injects",
+      "from": "app/orders/orders.service.ts#OrdersService",
+      "to": "app/users/users.service.ts#UsersService",
+      "at": 0,
+      "forwardRef": true
+    },
+    {
+      "kind": "injects",
+      "from": "app/orders/orders.service.ts#OrdersService",
+      "to": "token:AUDIT",
+      "at": 2,
+      "optional": true
+    },
+    {
+      "kind": "injects",
+      "from": "app/orders/orders.service.ts#OrdersService",
+      "to": "token:PAYMENT_GATEWAY",
+      "at": 1
+    },
+    {
+      "kind": "exports",
+      "from": "app/shared/health.ts#HealthModule",
+      "to": "app/shared/health.ts#HealthService"
+    },
+    {
+      "kind": "provides",
+      "from": "app/shared/health.ts#HealthModule",
+      "to": "app/shared/health.ts#HealthService"
+    },
+    {
+      "kind": "exports",
+      "from": "app/users/users.module.ts#UsersModule",
+      "to": "app/users/users.service.ts#UsersService"
+    },
+    {
+      "kind": "imports",
+      "from": "app/users/users.module.ts#UsersModule",
+      "to": "app/orders/orders.module.ts#OrdersModule",
+      "forwardRef": true
+    },
+    {
+      "kind": "provides",
+      "from": "app/users/users.module.ts#UsersModule",
+      "to": "app/users/users.repository.ts#UsersRepository"
+    },
+    {
+      "kind": "provides",
+      "from": "app/users/users.module.ts#UsersModule",
+      "to": "app/users/users.service.ts#UsersService"
+    },
+    {
+      "kind": "injects",
+      "from": "app/users/users.service.ts#UsersService",
+      "to": "app/config/config.service.ts#ConfigService",
+      "at": 1
+    },
+    {
+      "kind": "injects",
+      "from": "app/users/users.service.ts#UsersService",
+      "to": "app/orders/orders.service.ts#OrdersService",
+      "at": 2,
+      "forwardRef": true
+    },
+    {
+      "kind": "injects",
+      "from": "app/users/users.service.ts#UsersService",
+      "to": "app/users/users.repository.ts#UsersRepository",
+      "at": 0
+    },
+    {
+      "kind": "injects",
+      "from": "token:CLOCK",
+      "to": "app/config/config.service.ts#ConfigService",
+      "at": 0
+    },
+    {
+      "kind": "aliases",
+      "from": "token:LEGACY_ORDERS",
+      "to": "app/orders/orders.service.ts#OrdersService"
+    }
+  ],
+  "cycles": [
+    {
+      "ids": [
+        "app/orders/orders.module.ts#OrdersModule",
+        "app/users/users.module.ts#UsersModule"
+      ],
+      "names": [
+        "OrdersModule",
+        "UsersModule"
+      ],
+      "guarded": true
+    }
+  ],
+  "warnings": [
+    "OrphanService (app/shared/health.ts:12) is decorated but not listed in any module's providers or controllers."
+  ]
+}
