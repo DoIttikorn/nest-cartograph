@@ -1,6 +1,7 @@
 import { MarkerType, type Edge, type Node } from '@xyflow/react';
 import type { Cartograph, CartographEdge, CartographNode } from '../../src/schema.js';
-import { memberSize, moduleHeaderWidth } from './measure.js';
+import type { FocusResult, Layer } from './focus.js';
+import { focusSize, memberSize, moduleHeaderWidth } from './measure.js';
 
 /** `modules`: modules and their imports. `full`: providers and controllers drawn inside their modules. */
 export type Level = 'modules' | 'full';
@@ -40,9 +41,18 @@ export interface Route {
   targetAt: XY;
 }
 
+export type FocusData = {
+  node: CartographNode;
+  name: string;
+  layer: Layer;
+  module?: CartographNode;
+  seed: boolean;
+};
+
 export type ModuleFlowNode = Node<ModuleData, 'module'>;
 export type MemberFlowNode = Node<MemberData, 'member'>;
-export type FlowNode = ModuleFlowNode | MemberFlowNode;
+export type FocusFlowNode = Node<FocusData, 'focus'>;
+export type FlowNode = ModuleFlowNode | MemberFlowNode | FocusFlowNode;
 export type FlowEdge = Edge<{ edge: CartographEdge; route?: Route }, 'routed'>;
 
 /** Height of a module's title bar, kept clear of its children by the layout. */
@@ -116,6 +126,28 @@ export function toFlow(map: Cartograph, options: ViewOptions): { nodes: FlowNode
       (full && (edge.kind === 'injects' || edge.kind === 'aliases'));
     if (wanted) edges.push(toFlowEdge(edge));
   }
+  return { nodes, edges };
+}
+
+/** Focus mode: no module boxes, one flat left-to-right flow from controllers to databases and topics. */
+export function focusToFlow(result: FocusResult): { nodes: FlowNode[]; edges: FlowEdge[] } {
+  const nodes: FlowNode[] = result.nodes.map((n) => ({
+    id: n.node.id,
+    type: 'focus',
+    position: { x: 0, y: 0 },
+    data: { node: n.node, name: n.name, layer: n.layer, module: n.module, seed: n.seed },
+    ...focusSize(n.name, n.module?.name),
+  }));
+  const edges: FlowEdge[] = result.edges.map((e) => {
+    const edge: CartographEdge = e.edge ?? { from: e.from, to: e.to, kind: 'injects' };
+    const flow = toFlowEdge(edge);
+    return {
+      ...flow,
+      id: `focus|${e.from}|${e.to}`,
+      label: undefined,
+      className: `${flow.className}${e.bridged ? ' is-bridged' : ''}`,
+    };
+  });
   return { nodes, edges };
 }
 

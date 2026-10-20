@@ -36,6 +36,12 @@ export function memberSize(node: CartographNode, detail: string | undefined, exp
   return { width: clamp(Math.ceil(text + chrome), 120, 380), height: detail ? 54 : 40 };
 }
 
+/** A node in focus mode: layer badge and name, with the owning module on a second line. */
+export function focusSize(name: string, module: string | undefined): Size {
+  const text = Math.max(textWidth(name, 'memberName'), module ? textWidth(module, 'detail') : 0);
+  return { width: clamp(Math.ceil(text + 2 * 10 + 2 + 26 + 8 + 6), 140, 420), height: module ? 54 : 40 };
+}
+
 /** Header of a module: name, badges and, for a box with children, the member count. */
 export function moduleHeaderWidth(name: string, badges: string[], count?: number): number {
   const badgeWidth = badges.reduce((sum, badge) => sum + 6 + textWidth(badge, 'badge') + 14, 0);

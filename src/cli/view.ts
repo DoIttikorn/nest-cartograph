@@ -74,7 +74,8 @@ export async function serve(map: Cartograph, options: ViewOptions): Promise<void
     if (error.code !== 'EADDRINUSE') throw error;
     return listen(server, 0);
   });
-  const url = `http://localhost:${port}`;
+  // 127.0.0.1, not localhost: on macOS AirPlay listens on *:5000, and localhost may reach it over IPv6.
+  const url = `http://127.0.0.1:${port}`;
   process.stderr.write(`nest-cartograph: ${url}  (Ctrl+C to stop)\n`);
   if (options.open) openBrowser(url);
 }

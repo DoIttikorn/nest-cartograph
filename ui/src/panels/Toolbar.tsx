@@ -5,6 +5,10 @@ interface Props {
   map: Cartograph;
   level: Level;
   onLevel: (level: Level) => void;
+  /** Showing the flow around a search instead of a level. */
+  focused: boolean;
+  /** Enter in the search box: show only the flow around the matches. */
+  onSubmit: (query: string) => void;
   query: string;
   onQuery: (query: string) => void;
   hideExternal: boolean;
@@ -14,7 +18,7 @@ interface Props {
 }
 
 export function Toolbar(props: Props) {
-  const { map, level, query, hideExternal, issuesOpen } = props;
+  const { map, level, query, hideExternal, issuesOpen, focused } = props;
   const count = (kind: string) => map.nodes.filter((n) => n.kind === kind).length;
   const hasExternal = map.nodes.some((n) => n.external);
   const issues = map.warnings.length + map.cycles.filter((c) => !c.guarded).length;
@@ -28,7 +32,7 @@ export function Toolbar(props: Props) {
 
       <div className="cg-segmented" role="group" aria-label="Detail level">
         {(['modules', 'full'] as const).map((value) => (
-          <button key={value} type="button" aria-pressed={level === value} onClick={() => props.onLevel(value)}>
+          <button key={value} type="button" aria-pressed={!focused && level === value} onClick={() => props.onLevel(value)}>
             {value === 'modules' ? 'Modules' : 'Providers'}
           </button>
         ))}
@@ -37,10 +41,13 @@ export function Toolbar(props: Props) {
       <input
         className="cg-search"
         type="search"
-        placeholder="Find a module or provider"
+        placeholder="Find, then Enter to see its flow"
         value={query}
         onChange={(event) => props.onQuery(event.target.value)}
-        aria-label="Find a module or provider"
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') props.onSubmit(query);
+        }}
+        aria-label="Find a module or provider; press Enter to show only its flow"
       />
 
       {hasExternal && (

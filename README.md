@@ -30,11 +30,27 @@ npx nest-cartograph analyze -o - | jq '.cycles'   # JSON to stdout
 npx nest-cartograph analyze --fail-on-cycles      # exit code 2 on circular imports without forwardRef()
 
 npx nest-cartograph view                          # serves ./cartograph.json and opens the browser
-npx nest-cartograph view docs/cartograph.json --port 5000 --no-open
+npx nest-cartograph view docs/cartograph.json --port 5055 --no-open
 npx nest-cartograph view -o cartograph.html       # one self-contained HTML file, no server needed
 ```
 
 Summaries, warnings and cycles go to stderr. Run `npx nest-cartograph --help` for everything.
+
+### Following one flow
+
+On a big app the Providers view is too dense to read. Type a name in the search box and press
+**Enter** to see only the flow around the matches, laid out left to right from controllers to
+repositories and Kafka producers. The panel on the left filters it:
+
+- **Relationship**: what the matches call, what calls them, or both, and how many hops away.
+- **Layers**: controllers, services, database, Kafka / events, external APIs, guards, logger / config
+  and interfaces, guessed from names. Logger / config, guards and interfaces start hidden; a hidden
+  interface is skipped over, so `Controller → IFooService → FooService` reads `Controller → FooService`.
+- **Modules**: every module the flow reaches, for example `ReportModule` when searching `employee`,
+  with a checkbox to drop it.
+
+**Esc** closes the panels, then leaves the flow view. **Show flow** in a node's details does the same
+for that node.
 
 ## What the analyzer understands
 

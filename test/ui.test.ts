@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { focus, layerOf, type FocusOptions, type Layer } from '../ui/src/focus.js';
 import { layout } from '../ui/src/layout.js';
 import { parseCartograph } from '../ui/src/load.js';
 import { toFlow, type FlowNode } from '../ui/src/toFlow.js';
@@ -63,5 +64,59 @@ describe('layout', () => {
     }
     const labelled = placed.edges.find((e) => e.label === 'forRoot')!;
     expect(labelled.data!.route!.label).toBeDefined();
+  });
+});
+
+describe('focus', () => {
+  const options = (overrides: Partial<FocusOptions> = {}): FocusOptions => ({
+    query: '',
+    downstream: true,
+    upstream: true,
+    depth: 'all',
+    hiddenLayers: new Set<Layer>(),
+    hiddenModules: new Set<string>(),
+    ...overrides,
+  });
+  const names = (result: ReturnType<typeof focus>) => result.nodes.map((n) => n.name).sort();
+
+  it('walks down from a controller to what it ends up calling', () => {
+    const result = focus(map, options({ query: 'AppController', upstream: false }));
+    expect(names(result)).toEqual(
+      ['AUDIT', 'AppController', 'AppService', 'CONFIG_OPTIONS', 'ConfigService', 'HealthService', 'OrdersService', 'PAYMENT_GATEWAY', 'UsersRepository', 'UsersService'].sort(),
+    );
+    expect(result.nodes.filter((n) => n.seed).map((n) => n.name)).toEqual(['AppController']);
+  });
+
+  it('limits the walk by direction and depth', () => {
+    expect(names(focus(map, options({ query: 'UsersRepository', downstream: false, depth: 1 })))).toEqual(['UsersRepository', 'UsersService']);
+    expect(names(focus(map, options({ query: 'UsersRepository', upstream: false })))).toEqual(['UsersRepository']);
+  });
+
+  it('drops hidden modules from the walk but still lists them', () => {
+    const users = map.nodes.find((n) => n.name === 'UsersModule')!.id;
+    const result = focus(map, options({ query: 'AppController', upstream: false, hiddenModules: new Set([users]) }));
+    expect(names(result)).not.toContain('UsersService');
+    expect(names(result)).not.toContain('UsersRepository');
+    expect(result.modules.find((m) => m.module.id === users)).toMatchObject({ hidden: true });
+  });
+
+  it('bridges hidden interfaces and drops other hidden layers', () => {
+    const shown = focus(map, options({ query: 'LEGACY_ORDERS', upstream: false, depth: 1 }));
+    expect(shown.nodes.find((n) => n.name === 'LEGACY_ORDERS')?.layer).toBe('interface');
+    const bridged = focus(map, options({ query: 'Service', hiddenLayers: new Set<Layer>(['interface', 'infra']) }));
+    expect(names(bridged)).not.toContain('LEGACY_ORDERS');
+    expect(names(bridged)).not.toContain('ConfigService');
+  });
+
+  it('guesses layers from names', () => {
+    const node = (name: string, kind: 'provider' | 'controller' = 'provider') => ({ id: name, kind, name });
+    expect(layerOf(node('UsersController', 'controller'))).toBe('controller');
+    expect(layerOf(node('UsersRepository'))).toBe('db');
+    expect(layerOf(node('InjectModel(User)'))).toBe('db');
+    expect(layerOf(node('KafkaProducerService'))).toBe('messaging');
+    expect(layerOf(node('EmployeeDataTriggerPublisher'))).toBe('messaging');
+    expect(layerOf(node('PayrollReportIntegration'))).toBe('external');
+    expect(layerOf(node('AppConfigService'))).toBe('infra');
+    expect(layerOf(node('ReportService'))).toBe('service');
   });
 });

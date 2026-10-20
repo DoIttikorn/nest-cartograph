@@ -7,7 +7,6 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useEdgesState,
-  useNodesInitialized,
   useNodesState,
   useReactFlow,
   type EdgeTypes,
@@ -15,6 +14,9 @@ import {
 } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import type { Cartograph } from '../../src/schema.js';
+import { focus, type Depth, type Layer } from './focus.js';
+import { FocusNode } from './nodes/FocusNode.js';
+import { FocusPanel } from './panels/FocusPanel.js';
 import { RoutedEdge } from './edges/RoutedEdge.js';
 import { layout } from './layout.js';
 import { loadCartograph, readFile } from './load.js';
@@ -22,9 +24,12 @@ import { ModuleNode } from './nodes/ModuleNode.js';
 import { MemberNode } from './nodes/MemberNode.js';
 import { Inspector } from './panels/Inspector.js';
 import { IssuesList, Toolbar } from './panels/Toolbar.js';
-import { toFlow, type FlowEdge, type FlowNode, type Level } from './toFlow.js';
+import { focusToFlow, toFlow, type FlowEdge, type FlowNode, type Level } from './toFlow.js';
 
-const nodeTypes: NodeTypes = { module: ModuleNode, member: MemberNode };
+const nodeTypes: NodeTypes = { module: ModuleNode, member: MemberNode, focus: FocusNode };
+
+/** Noise when following a request from controller to database: hidden until asked for. */
+const DEFAULT_HIDDEN_LAYERS: Layer[] = ['infra', 'guard', 'interface'];
 const edgeTypes: EdgeTypes = { routed: RoutedEdge };
 
 export function App() {
@@ -53,41 +58,49 @@ function Atlas({ map }: { map: Cartograph }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [issuesOpen, setIssuesOpen] = useState(false);
+  // Focus mode: set by pressing Enter in the search box, shows only the flow around the matches.
+  const [focusQuery, setFocusQuery] = useState<string | null>(null);
+  const [direction, setDirection] = useState({ downstream: true, upstream: true });
+  const [depth, setDepth] = useState<Depth>('all');
+  const [hiddenLayers, setHiddenLayers] = useState<ReadonlySet<Layer>>(() => new Set(DEFAULT_HIDDEN_LAYERS));
+  const [hiddenModules, setHiddenModules] = useState<ReadonlySet<string>>(() => new Set());
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
-  const { fitView } = useReactFlow();
-  const initialized = useNodesInitialized();
-  const needsFit = useRef(false);
+  const { fitView, setViewport } = useReactFlow();
+  const pane = useRef<HTMLDivElement>(null);
+
+  const focused = useMemo(
+    () => (focusQuery === null ? null : focus(map, { query: focusQuery, ...direction, depth, hiddenLayers, hiddenModules })),
+    [map, focusQuery, direction, depth, hiddenLayers, hiddenModules],
+  );
 
   // Re-layout whenever the shape of the drawing changes.
   useEffect(() => {
     let cancelled = false;
-    const flow = toFlow(map, { level, hideExternal });
+    const flow = focused ? focusToFlow(focused) : toFlow(map, { level, hideExternal });
     layout(flow.nodes, flow.edges).then((placed) => {
       if (cancelled) return;
-      needsFit.current = true;
       setNodes(placed.nodes);
       setEdges(placed.edges);
+      // Fit from the layout itself: right after a swap React Flow has not measured the new nodes, and
+      // fitView() would frame whatever it already knows.
+      const viewport = fitting(placed.nodes, pane.current, focused ? FOCUS_PANEL_WIDTH : 0);
+      if (viewport) void setViewport(viewport, { duration: 250 });
     });
     return () => {
       cancelled = true;
     };
-  }, [map, level, hideExternal, setNodes, setEdges]);
-
-  useEffect(() => {
-    if (initialized && needsFit.current) {
-      needsFit.current = false;
-      // Small maps would otherwise be blown up to fill the screen.
-      void fitView({ padding: 0.08, duration: 250, maxZoom: 1.25 });
-    }
-  }, [initialized, nodes, fitView]);
+  }, [map, level, hideExternal, focused, setNodes, setEdges, setViewport]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setSelected(null);
-        setIssuesOpen(false);
-      }
+      if (event.key !== 'Escape') return;
+      // First Escape closes panels, the next one leaves the flow view.
+      setSelected((current) => {
+        if (current === null) setFocusQuery(null);
+        return null;
+      });
+      setIssuesOpen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -96,16 +109,32 @@ function Atlas({ map }: { map: Cartograph }) {
   // Search dims what does not match; a module stays lit when one of its members matches.
   const shownNodes = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return nodes;
+    // The flow view already shows only what relates to its query; the seeds are outlined instead.
+    if (!q || (focusQuery !== null && query.trim() === focusQuery)) return nodes;
     const hits = new Set(nodes.filter((n) => n.data.node.name.toLowerCase().includes(q)).map((n) => n.id));
     for (const n of nodes) if (hits.has(n.id) && n.parentId) hits.add(n.parentId);
     return nodes.map((n) => ({ ...n, className: hits.has(n.id) ? 'is-hit' : 'is-dimmed' }));
-  }, [nodes, query]);
+  }, [nodes, query, focusQuery]);
 
   const shownEdges = useMemo(() => {
     if (!selected) return edges;
     return edges.map((e) => (e.source === selected || e.target === selected ? { ...e, animated: true, className: `${e.className} is-active` } : e));
   }, [edges, selected]);
+
+  const startFocus = useCallback((q: string) => {
+    const trimmed = q.trim();
+    if (!trimmed) return setFocusQuery(null);
+    setQuery(trimmed);
+    setFocusQuery(trimmed);
+    setHiddenModules(new Set());
+    setSelected(null);
+  }, []);
+
+  const toggle = <T,>(set: ReadonlySet<T>, value: T): Set<T> => {
+    const next = new Set(set);
+    if (!next.delete(value)) next.add(value);
+    return next;
+  };
 
   const select = useCallback(
     (id: string | null) => {
@@ -117,6 +146,7 @@ function Atlas({ map }: { map: Cartograph }) {
 
   return (
     <ReactFlow
+      ref={pane}
       nodes={shownNodes}
       edges={shownEdges}
       nodeTypes={nodeTypes}
@@ -136,7 +166,12 @@ function Atlas({ map }: { map: Cartograph }) {
         <Toolbar
           map={map}
           level={level}
-          onLevel={setLevel}
+          onLevel={(value) => {
+            setFocusQuery(null);
+            setLevel(value);
+          }}
+          focused={focused !== null}
+          onSubmit={startFocus}
           query={query}
           onQuery={setQuery}
           hideExternal={hideExternal}
@@ -145,14 +180,52 @@ function Atlas({ map }: { map: Cartograph }) {
           onIssues={() => setIssuesOpen((open) => !open)}
         />
         {issuesOpen && <IssuesList map={map} onSelect={select} />}
+        {focused && focusQuery !== null && (
+          <FocusPanel
+            query={focusQuery}
+            result={focused}
+            {...direction}
+            onDirection={setDirection}
+            depth={depth}
+            onDepth={setDepth}
+            hiddenLayers={hiddenLayers}
+            onToggleLayer={(layer) => setHiddenLayers((set) => toggle(set, layer))}
+            onToggleModule={(id) => setHiddenModules((set) => toggle(set, id))}
+            onAllModules={(show) => setHiddenModules(show ? new Set() : new Set(focused.modules.map((m) => m.module.id)))}
+            onExit={() => setFocusQuery(null)}
+          />
+        )}
+        {focused && focused.nodes.length === 0 && (
+          <div className="cg-issues cg-muted">Nothing matches “{focusQuery}” with these filters.</div>
+        )}
       </Panel>
       {selected && (
         <Panel position="top-right">
-          <Inspector map={map} id={selected} onSelect={select} onClose={() => setSelected(null)} />
+          <Inspector map={map} id={selected} onSelect={select} onFocus={startFocus} onClose={() => setSelected(null)} />
         </Panel>
       )}
     </ReactFlow>
   );
+}
+
+/** Room the focus panel takes on the left, kept clear when framing the flow. */
+const FOCUS_PANEL_WIDTH = 320;
+
+/** Viewport that frames the top-level nodes right of `inset`. Small maps are not blown up past 125%. */
+function fitting(nodes: FlowNode[], pane: HTMLElement | null, inset: number): { x: number; y: number; zoom: number } | undefined {
+  const roots = nodes.filter((n) => !n.parentId);
+  if (!pane || roots.length === 0) return undefined;
+  const left = Math.min(...roots.map((n) => n.position.x));
+  const top = Math.min(...roots.map((n) => n.position.y));
+  const right = Math.max(...roots.map((n) => n.position.x + (n.width ?? 0)));
+  const bottom = Math.max(...roots.map((n) => n.position.y + (n.height ?? 0)));
+  const box = pane.getBoundingClientRect();
+  const height = box.height;
+  // A narrow window would leave no room beside the panel; then the panel just covers part of the flow.
+  const offset = box.width - inset > 320 ? inset : 0;
+  const width = box.width - offset;
+  const zoom = Math.max(0.05, Math.min(1.25, (width * 0.92) / (right - left || 1), (height * 0.92) / (bottom - top || 1)));
+  return { x: offset + (width - (right - left) * zoom) / 2 - left * zoom, y: (height - (bottom - top) * zoom) / 2 - top * zoom, zoom };
 }
 
 /** Shown when the page has no map: opened from disk, or served without cartograph.json. */

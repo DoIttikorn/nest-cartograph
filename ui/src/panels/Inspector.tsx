@@ -5,11 +5,13 @@ interface Props {
   map: Cartograph;
   id: string;
   onSelect: (id: string) => void;
+  /** Show only the flow around a provider or controller. */
+  onFocus: (name: string) => void;
   onClose: () => void;
 }
 
 /** Everything known about the selected node, with links to its neighbours. */
-export function Inspector({ map, id, onSelect, onClose }: Props) {
+export function Inspector({ map, id, onSelect, onFocus, onClose }: Props) {
   const byId = new Map(map.nodes.map((n) => [n.id, n]));
   const node = byId.get(id);
   if (!node) return null;
@@ -48,6 +50,13 @@ export function Inspector({ map, id, onSelect, onClose }: Props) {
         <code className="cg-inspector__file">
           {node.file}:{node.line}
         </code>
+      )}
+      {node.kind !== 'module' && (
+        <p>
+          <button type="button" className="cg-button cg-button--small" onClick={() => onFocus(node.name)}>
+            Show flow
+          </button>
+        </p>
       )}
       {ownerEdge && (
         <p>
