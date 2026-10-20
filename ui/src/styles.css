@@ -104,6 +104,16 @@ button {
   pointer-events: none;
 }
 
+/* A panel's box is as wide as its widest child and as tall as all of them, so the empty corners
+   (beside the flow panel, under the toolbar) would swallow pan and zoom. Only the cards take input. */
+.react-flow__panel.top.left {
+  pointer-events: none;
+}
+
+.react-flow__panel.top.left > * {
+  pointer-events: auto;
+}
+
 /* ---- modules ---------------------------------------------------------------------------- */
 
 .cg-module {
