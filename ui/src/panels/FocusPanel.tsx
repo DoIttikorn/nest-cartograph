@@ -2,6 +2,8 @@ import { LAYERS, type Depth, type FocusResult, type Layer } from '../focus.js';
 
 interface Props {
   query: string;
+  /** Set when the flow starts from a whole module rather than the query matches. */
+  module?: string;
   result: FocusResult;
   downstream: boolean;
   upstream: boolean;
@@ -12,6 +14,7 @@ interface Props {
   onToggleLayer: (layer: Layer) => void;
   onToggleModule: (id: string) => void;
   onAllModules: (show: boolean) => void;
+  onSelect: (id: string) => void;
   onExit: () => void;
 }
 
@@ -21,15 +24,17 @@ const DEPTHS: Depth[] = [1, 2, 3, 'all'];
 export function FocusPanel(props: Props) {
   const { result, downstream, upstream, depth, hiddenLayers } = props;
   const seeds = result.nodes.filter((n) => n.seed).length;
+  const ends = result.nodes.filter((n) => n.end).sort((a, b) => a.layer.localeCompare(b.layer) || a.name.localeCompare(b.name));
   const direction = downstream && upstream ? 'both' : downstream ? 'down' : 'up';
 
   return (
     <div className="cg-focus-panel">
       <header>
         <div>
-          <span className="cg-muted">Flow of</span> <strong>“{props.query}”</strong>
+          <span className="cg-muted">Flow of</span> {props.module ? <strong>{props.module}</strong> : <strong>“{props.query}”</strong>}
           <div className="cg-muted">
-            {seeds} match{seeds === 1 ? '' : 'es'} · {result.nodes.length} nodes · {result.edges.length} links
+            {seeds} {props.module ? `member${seeds === 1 ? '' : 's'}` : `match${seeds === 1 ? '' : 'es'}`} · {result.nodes.length} nodes ·{' '}
+            {result.edges.length} links
           </div>
         </div>
         <button type="button" className="cg-close" onClick={props.onExit} aria-label="Leave flow view" title="Leave flow view (Esc)">
@@ -64,6 +69,25 @@ export function FocusPanel(props: Props) {
           </button>
         ))}
       </div>
+
+      {ends.length > 0 && (
+        <>
+          <h3>
+            Ends at <span className="cg-muted">{ends.length}</span>
+          </h3>
+          <ul className="cg-filter-list cg-ends">
+            {ends.map((n) => (
+              <li key={n.node.id}>
+                <span className={`cg-swatch is-layer-${n.layer}`} />
+                <button type="button" className="cg-link" onClick={() => props.onSelect(n.node.id)}>
+                  {n.name}
+                </button>
+                {n.module && <span className="cg-muted">{n.module.name}</span>}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <h3>Layers</h3>
       <ul className="cg-filter-list">

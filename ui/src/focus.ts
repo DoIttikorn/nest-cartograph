@@ -22,6 +22,8 @@ export type Depth = 1 | 2 | 3 | 'all';
 
 export interface FocusOptions {
   query: string;
+  /** Start from every provider and controller of this module id instead of the `query` matches. */
+  module?: string;
   /** Follow what the matches depend on: controller → service → repository. */
   downstream: boolean;
   /** Follow what depends on the matches: repository → service → controller. */
@@ -40,6 +42,8 @@ export interface FocusNode {
   module?: CartographNode;
   /** Matched the query, rather than reached from a match. */
   seed: boolean;
+  /** Reached going downstream and depends on nothing else left in the walk: where the flow ends. */
+  end: boolean;
 }
 
 export interface FocusEdge {
@@ -88,8 +92,9 @@ export function layerOf(node: CartographNode, name = node.name): Layer {
 }
 
 /**
- * The part of the map around the providers and controllers whose name contains `query`: what they
- * depend on (downstream), what depends on them (upstream), or both, up to `depth` hops.
+ * The part of the map around the providers and controllers whose name contains `query` (or that
+ * belong to `module`): what they depend on (downstream), what depends on them (upstream), or both,
+ * up to `depth` hops.
  *
  * Hidden interfaces are bridged (`A → IFoo → Foo` becomes `A → Foo`, and `IFoo` bound with `useClass`
  * is shown as `Foo`); other hidden layers are dropped and the walk does not continue through them.
@@ -146,6 +151,7 @@ export function focus(map: Cartograph, options: FocusOptions): FocusResult {
   const q = options.query.trim().toLowerCase();
   const seeds = [...shown.keys()].filter((id) => {
     if (hiddenLayer(id)) return false;
+    if (options.module !== undefined) return owners.get(id) === options.module;
     const node = byId.get(id)!;
     return node.name.toLowerCase().includes(q) || shown.get(id)!.name.toLowerCase().includes(q);
   });
@@ -185,7 +191,8 @@ export function focus(map: Cartograph, options: FocusOptions): FocusResult {
 
   const moduleOf = (id: string) => owners.get(id);
   const everything = walk(hiddenLayer);
-  const included = walk((id) => hiddenLayer(id) || options.hiddenModules.has(moduleOf(id) ?? ''));
+  const blocked = (id: string) => hiddenLayer(id) || options.hiddenModules.has(moduleOf(id) ?? '');
+  const included = walk(blocked);
 
   const moduleCounts = new Map<string, number>();
   for (const id of everything) {
@@ -206,11 +213,13 @@ export function focus(map: Cartograph, options: FocusOptions): FocusResult {
   }
 
   const seedSet = new Set(seeds);
+  // An end has nothing further down even without the depth limit, so a cut-off walk does not fake one.
+  const isEnd = (id: string) => options.downstream && !seedSet.has(id) && !(forward.get(id) ?? []).some((to) => !blocked(to));
   const nodes: FocusNode[] = [...included]
     .sort()
     .map((id) => {
       const owner = moduleOf(id);
-      return { node: byId.get(id)!, ...shown.get(id)!, module: owner ? byId.get(owner) : undefined, seed: seedSet.has(id) };
+      return { node: byId.get(id)!, ...shown.get(id)!, module: owner ? byId.get(owner) : undefined, seed: seedSet.has(id), end: isEnd(id) };
     });
   return {
     nodes,

@@ -311,6 +311,18 @@ button {
   outline-offset: 2px;
 }
 
+/* Where a downstream walk stops: nothing further to call. */
+.cg-focus.is-end {
+  border-right: 4px solid var(--cg-layer);
+}
+
+.cg-ends li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
 .cg-edge.is-bridged .react-flow__edge-path {
   stroke-dasharray: 2 3;
 }
@@ -661,4 +673,8 @@ button {
 
 .cg-error {
   color: var(--cg-danger);
+}
+
+.react-flow__controls-button.is-locked {
+  color: var(--cg-module);
 }

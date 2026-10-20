@@ -7,11 +7,13 @@ interface Props {
   onSelect: (id: string) => void;
   /** Show only the flow around a provider or controller. */
   onFocus: (name: string) => void;
+  /** Show where a module's providers and controllers lead, down to the end. */
+  onFocusModule: (id: string) => void;
   onClose: () => void;
 }
 
 /** Everything known about the selected node, with links to its neighbours. */
-export function Inspector({ map, id, onSelect, onFocus, onClose }: Props) {
+export function Inspector({ map, id, onSelect, onFocus, onFocusModule, onClose }: Props) {
   const byId = new Map(map.nodes.map((n) => [n.id, n]));
   const node = byId.get(id);
   if (!node) return null;
@@ -51,13 +53,16 @@ export function Inspector({ map, id, onSelect, onFocus, onClose }: Props) {
           {node.file}:{node.line}
         </code>
       )}
-      {node.kind !== 'module' && (
-        <p>
-          <button type="button" className="cg-button cg-button--small" onClick={() => onFocus(node.name)}>
-            Show flow
-          </button>
-        </p>
-      )}
+      <p>
+        <button
+          type="button"
+          className="cg-button cg-button--small"
+          onClick={() => (node.kind === 'module' ? onFocusModule(node.id) : onFocus(node.name))}
+          title={node.kind === 'module' ? 'Follow what this module calls, all the way down' : undefined}
+        >
+          Show flow
+        </button>
+      </p>
       {ownerEdge && (
         <p>
           In{' '}

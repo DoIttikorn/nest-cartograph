@@ -47,6 +47,7 @@ export type FocusData = {
   layer: Layer;
   module?: CartographNode;
   seed: boolean;
+  end: boolean;
 };
 
 export type ModuleFlowNode = Node<ModuleData, 'module'>;
@@ -135,7 +136,7 @@ export function focusToFlow(result: FocusResult): { nodes: FlowNode[]; edges: Fl
     id: n.node.id,
     type: 'focus',
     position: { x: 0, y: 0 },
-    data: { node: n.node, name: n.name, layer: n.layer, module: n.module, seed: n.seed },
+    data: { node: n.node, name: n.name, layer: n.layer, module: n.module, seed: n.seed, end: n.end },
     ...focusSize(n.name, n.module?.name),
   }));
   const edges: FlowEdge[] = result.edges.map((e) => {

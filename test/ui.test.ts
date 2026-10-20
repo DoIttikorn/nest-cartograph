@@ -87,6 +87,18 @@ describe('focus', () => {
     expect(result.nodes.filter((n) => n.seed).map((n) => n.name)).toEqual(['AppController']);
   });
 
+  it('starts from every member of a module and marks where the flow ends', () => {
+    const app = map.nodes.find((n) => n.name === 'AppModule')!.id;
+    const result = focus(map, options({ query: 'ignored', module: app, upstream: false }));
+    expect(result.nodes.filter((n) => n.seed).map((n) => n.name).sort()).toEqual(['AppController', 'AppService']);
+    expect(names(result)).toContain('UsersRepository');
+    const ends = result.nodes.filter((n) => n.end).map((n) => n.name);
+    expect(ends).toContain('UsersRepository');
+    expect(ends).not.toContain('UsersService');
+    // A depth limit cuts the walk short, but a node with more below it is still not an end.
+    expect(focus(map, options({ module: app, upstream: false, depth: 1 })).nodes.filter((n) => n.end).map((n) => n.name)).not.toContain('UsersService');
+  });
+
   it('limits the walk by direction and depth', () => {
     expect(names(focus(map, options({ query: 'UsersRepository', downstream: false, depth: 1 })))).toEqual(['UsersRepository', 'UsersService']);
     expect(names(focus(map, options({ query: 'UsersRepository', upstream: false })))).toEqual(['UsersRepository']);

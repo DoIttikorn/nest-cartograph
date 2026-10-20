@@ -15,9 +15,10 @@ const BADGE: Record<Layer, string> = {
 
 /** A provider or controller in focus mode, coloured by the layer it belongs to. */
 export function FocusNode({ data, selected }: NodeProps<FocusFlowNode>) {
-  const { node, name, layer, module, seed } = data;
+  const { node, name, layer, module, seed, end } = data;
   const classes = ['cg-member', 'cg-focus', `is-layer-${layer}`, `is-${node.providerType ?? 'class'}`];
   if (seed) classes.push('is-seed');
+  if (end) classes.push('is-end');
   if (selected) classes.push('is-selected');
 
   return (

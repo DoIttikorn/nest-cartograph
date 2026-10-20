@@ -1,6 +1,7 @@
 import {
   Background,
   BackgroundVariant,
+  ControlButton,
   Controls,
   MiniMap,
   Panel,
@@ -32,6 +33,9 @@ const nodeTypes: NodeTypes = { module: ModuleNode, member: MemberNode, focus: Fo
 const DEFAULT_HIDDEN_LAYERS: Layer[] = ['infra', 'guard', 'interface'];
 const edgeTypes: EdgeTypes = { routed: RoutedEdge };
 
+/** What the flow view starts from: the providers matching a search, or every member of a module. */
+type FocusTarget = { query: string; module?: undefined } | { query?: undefined; module: string };
+
 export function App() {
   const [map, setMap] = useState<Cartograph | null | undefined>(undefined);
   const [error, setError] = useState<string>();
@@ -58,8 +62,10 @@ function Atlas({ map }: { map: Cartograph }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [issuesOpen, setIssuesOpen] = useState(false);
-  // Focus mode: set by pressing Enter in the search box, shows only the flow around the matches.
-  const [focusQuery, setFocusQuery] = useState<string | null>(null);
+  // Focus mode: set by pressing Enter in the search box (or "Show flow" on a module), shows only the flow around it.
+  const [target, setTarget] = useState<FocusTarget | null>(null);
+  // Locked: nodes stay where the layout put them, and dragging anywhere pans the map.
+  const [locked, setLocked] = useState(false);
   const [direction, setDirection] = useState({ downstream: true, upstream: true });
   const [depth, setDepth] = useState<Depth>('all');
   const [hiddenLayers, setHiddenLayers] = useState<ReadonlySet<Layer>>(() => new Set(DEFAULT_HIDDEN_LAYERS));
@@ -70,8 +76,8 @@ function Atlas({ map }: { map: Cartograph }) {
   const pane = useRef<HTMLDivElement>(null);
 
   const focused = useMemo(
-    () => (focusQuery === null ? null : focus(map, { query: focusQuery, ...direction, depth, hiddenLayers, hiddenModules })),
-    [map, focusQuery, direction, depth, hiddenLayers, hiddenModules],
+    () => (target === null ? null : focus(map, { query: target.query ?? '', module: target.module, ...direction, depth, hiddenLayers, hiddenModules })),
+    [map, target, direction, depth, hiddenLayers, hiddenModules],
   );
 
   // Re-layout whenever the shape of the drawing changes.
@@ -97,7 +103,7 @@ function Atlas({ map }: { map: Cartograph }) {
       if (event.key !== 'Escape') return;
       // First Escape closes panels, the next one leaves the flow view.
       setSelected((current) => {
-        if (current === null) setFocusQuery(null);
+        if (current === null) setTarget(null);
         return null;
       });
       setIssuesOpen(false);
@@ -110,11 +116,11 @@ function Atlas({ map }: { map: Cartograph }) {
   const shownNodes = useMemo(() => {
     const q = query.trim().toLowerCase();
     // The flow view already shows only what relates to its query; the seeds are outlined instead.
-    if (!q || (focusQuery !== null && query.trim() === focusQuery)) return nodes;
+    if (!q || (target !== null && query.trim() === target.query)) return nodes;
     const hits = new Set(nodes.filter((n) => n.data.node.name.toLowerCase().includes(q)).map((n) => n.id));
     for (const n of nodes) if (hits.has(n.id) && n.parentId) hits.add(n.parentId);
     return nodes.map((n) => ({ ...n, className: hits.has(n.id) ? 'is-hit' : 'is-dimmed' }));
-  }, [nodes, query, focusQuery]);
+  }, [nodes, query, target]);
 
   const shownEdges = useMemo(() => {
     if (!selected) return edges;
@@ -123,9 +129,19 @@ function Atlas({ map }: { map: Cartograph }) {
 
   const startFocus = useCallback((q: string) => {
     const trimmed = q.trim();
-    if (!trimmed) return setFocusQuery(null);
+    if (!trimmed) return setTarget(null);
     setQuery(trimmed);
-    setFocusQuery(trimmed);
+    setTarget({ query: trimmed });
+    setHiddenModules(new Set());
+    setSelected(null);
+  }, []);
+
+  // A module's flow answers "where does this end up": follow its calls down, as far as they go.
+  const startModuleFocus = useCallback((id: string) => {
+    setQuery('');
+    setTarget({ module: id });
+    setDirection({ downstream: true, upstream: false });
+    setDepth('all');
     setHiddenModules(new Set());
     setSelected(null);
   }, []);
@@ -156,18 +172,29 @@ function Atlas({ map }: { map: Cartograph }) {
       onNodeClick={(_, node) => setSelected(node.id)}
       onPaneClick={() => setSelected(null)}
       nodesConnectable={false}
+      nodesDraggable={!locked}
       colorMode="system"
       minZoom={0.05}
     >
       <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
-      <Controls showInteractive={false} />
+      <Controls showInteractive={false}>
+        <ControlButton
+          onClick={() => setLocked((value) => !value)}
+          aria-pressed={locked}
+          title={locked ? 'Unlock: drag nodes around' : 'Lock: drag only pans and zooms the map'}
+          aria-label={locked ? 'Unlock nodes' : 'Lock nodes'}
+          className={locked ? 'is-locked' : undefined}
+        >
+          <LockIcon locked={locked} />
+        </ControlButton>
+      </Controls>
       <MiniMap pannable zoomable nodeClassName={(n) => `cg-minimap--${n.type}`} />
       <Panel position="top-left">
         <Toolbar
           map={map}
           level={level}
           onLevel={(value) => {
-            setFocusQuery(null);
+            setTarget(null);
             setLevel(value);
           }}
           focused={focused !== null}
@@ -180,9 +207,10 @@ function Atlas({ map }: { map: Cartograph }) {
           onIssues={() => setIssuesOpen((open) => !open)}
         />
         {issuesOpen && <IssuesList map={map} onSelect={select} />}
-        {focused && focusQuery !== null && (
+        {focused && target !== null && (
           <FocusPanel
-            query={focusQuery}
+            query={target.query ?? ''}
+            module={target.module === undefined ? undefined : map.nodes.find((n) => n.id === target.module)?.name}
             result={focused}
             {...direction}
             onDirection={setDirection}
@@ -192,19 +220,43 @@ function Atlas({ map }: { map: Cartograph }) {
             onToggleLayer={(layer) => setHiddenLayers((set) => toggle(set, layer))}
             onToggleModule={(id) => setHiddenModules((set) => toggle(set, id))}
             onAllModules={(show) => setHiddenModules(show ? new Set() : new Set(focused.modules.map((m) => m.module.id)))}
-            onExit={() => setFocusQuery(null)}
+            onSelect={select}
+            onExit={() => setTarget(null)}
           />
         )}
         {focused && focused.nodes.length === 0 && (
-          <div className="cg-issues cg-muted">Nothing matches “{focusQuery}” with these filters.</div>
+          <div className="cg-issues cg-muted">
+            {target?.module !== undefined ? 'This module calls nothing with these filters.' : `Nothing matches “${target?.query}” with these filters.`}
+          </div>
         )}
       </Panel>
       {selected && (
         <Panel position="top-right">
-          <Inspector map={map} id={selected} onSelect={select} onFocus={startFocus} onClose={() => setSelected(null)} />
+          <Inspector
+            map={map}
+            id={selected}
+            onSelect={select}
+            onFocus={startFocus}
+            onFocusModule={startModuleFocus}
+            onClose={() => setSelected(null)}
+          />
         </Panel>
       )}
     </ReactFlow>
+  );
+}
+
+function LockIcon({ locked }: { locked: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d={
+          locked
+            ? 'M7 10V7a5 5 0 0 1 10 0v3h1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1h1zm2 0h6V7a3 3 0 0 0-6 0v3z'
+            : 'M9 10h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1h1V7a5 5 0 0 1 9.6-2l-1.8.9A3 3 0 0 0 9 7v3z'
+        }
+      />
+    </svg>
   );
 }
 
