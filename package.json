@@ -1,6 +1,6 @@
 {
   "name": "nest-cartograph",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Map a NestJS app's modules, providers and injections from its source code, then explore the map in your browser.",
   "keywords": [
     "nestjs",
