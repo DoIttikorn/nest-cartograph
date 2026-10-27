@@ -74,6 +74,9 @@ function Atlas({ map }: { map: Cartograph }) {
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
   const { fitView, setViewport } = useReactFlow();
   const pane = useRef<HTMLDivElement>(null);
+  // The first framing is instant: there is nothing to animate from, and an animation waits for frames
+  // that a background tab does not draw.
+  const framed = useRef(false);
 
   const focused = useMemo(
     () => (target === null ? null : focus(map, { query: target.query ?? '', module: target.module, ...direction, depth, hiddenLayers, hiddenModules })),
@@ -83,6 +86,7 @@ function Atlas({ map }: { map: Cartograph }) {
   // Re-layout whenever the shape of the drawing changes.
   useEffect(() => {
     let cancelled = false;
+    let stopWaiting: (() => void) | undefined;
     const flow = focused ? focusToFlow(focused) : toFlow(map, { level, hideExternal });
     layout(flow.nodes, flow.edges).then((placed) => {
       if (cancelled) return;
@@ -90,11 +94,16 @@ function Atlas({ map }: { map: Cartograph }) {
       setEdges(placed.edges);
       // Fit from the layout itself: right after a swap React Flow has not measured the new nodes, and
       // fitView() would frame whatever it already knows.
-      const viewport = fitting(placed.nodes, pane.current, focused ? FOCUS_PANEL_WIDTH : 0);
-      if (viewport) void setViewport(viewport, { duration: 250 });
+      stopWaiting = whenSized(pane.current, (box) => {
+        const viewport = fitting(placed.nodes, box, focused ? FOCUS_PANEL_WIDTH : 0);
+        if (!viewport) return;
+        void setViewport(viewport, { duration: framed.current ? 250 : 0 });
+        framed.current = true;
+      });
     });
     return () => {
       cancelled = true;
+      stopWaiting?.();
     };
   }, [map, level, hideExternal, focused, setNodes, setEdges, setViewport]);
 
@@ -263,15 +272,36 @@ function LockIcon({ locked }: { locked: boolean }) {
 /** Room the focus panel takes on the left, kept clear when framing the flow. */
 const FOCUS_PANEL_WIDTH = 320;
 
-/** Viewport that frames the top-level nodes right of `inset`. Small maps are not blown up past 125%. */
-function fitting(nodes: FlowNode[], pane: HTMLElement | null, inset: number): { x: number; y: number; zoom: number } | undefined {
+/**
+ * Calls `then` with the element's box once it has a size. A page opened in a background tab, or in an
+ * iframe that is not shown yet, can lay out while the pane is still 0×0, which would frame the map at
+ * the smallest zoom. Returns a function that stops waiting.
+ */
+function whenSized(element: HTMLElement | null, then: (box: DOMRect) => void): () => void {
+  if (!element) return () => {};
+  const box = element.getBoundingClientRect();
+  if (box.width > 0 && box.height > 0) {
+    then(box);
+    return () => {};
+  }
+  const observer = new ResizeObserver(() => {
+    const sized = element.getBoundingClientRect();
+    if (sized.width === 0 || sized.height === 0) return;
+    observer.disconnect();
+    then(sized);
+  });
+  observer.observe(element);
+  return () => observer.disconnect();
+}
+
+/** Viewport that frames the top-level nodes right of `inset` in `box`. Small maps are not blown up past 125%. */
+function fitting(nodes: FlowNode[], box: DOMRect, inset: number): { x: number; y: number; zoom: number } | undefined {
   const roots = nodes.filter((n) => !n.parentId);
-  if (!pane || roots.length === 0) return undefined;
+  if (roots.length === 0) return undefined;
   const left = Math.min(...roots.map((n) => n.position.x));
   const top = Math.min(...roots.map((n) => n.position.y));
   const right = Math.max(...roots.map((n) => n.position.x + (n.width ?? 0)));
   const bottom = Math.max(...roots.map((n) => n.position.y + (n.height ?? 0)));
-  const box = pane.getBoundingClientRect();
   const height = box.height;
   // A narrow window would leave no room beside the panel; then the panel just covers part of the flow.
   const offset = box.width - inset > 320 ? inset : 0;
