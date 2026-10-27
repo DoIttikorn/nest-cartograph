@@ -52,6 +52,13 @@ repositories and Kafka producers. The panel on the left filters it:
 **Esc** closes the panels, then leaves the flow view. **Show flow** in a node's details does the same
 for that node.
 
+### Opening the code
+
+When the map is served by `nest-cartograph view` (or plain `npx nest-cartograph`), a node's details
+have **Open in VS Code** and **Open in Zed** links that jump to the class's line, through the editors'
+`vscode://` and `zed://` links. A file written with `-o` leaves them out: it is meant to be shared, so
+it carries no paths from your machine.
+
 ## What the analyzer understands
 
 | In your code | On the map |

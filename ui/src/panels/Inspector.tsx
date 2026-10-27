@@ -1,4 +1,6 @@
 import type { Cartograph, CartographEdge, CartographNode, EdgeKind } from '../../../src/schema.js';
+import { EDITORS, editorUrl } from '../editor.js';
+import { projectFolder } from '../load.js';
 import { detailOf } from '../toFlow.js';
 
 interface Props {
@@ -21,6 +23,7 @@ export function Inspector({ map, id, onSelect, onFocus, onFocusModule, onClose }
   const out = (...kinds: EdgeKind[]) => map.edges.filter((e) => e.from === id && kinds.includes(e.kind));
   const into = (...kinds: EdgeKind[]) => map.edges.filter((e) => e.to === id && kinds.includes(e.kind));
   const ownerEdge = into('provides', 'controls')[0];
+  const root = projectFolder();
 
   const sections: [string, CartographEdge[], 'to' | 'from'][] =
     node.kind === 'module'
@@ -52,6 +55,16 @@ export function Inspector({ map, id, onSelect, onFocus, onFocusModule, onClose }
         <code className="cg-inspector__file">
           {node.file}:{node.line}
         </code>
+      )}
+      {node.file && root && (
+        <p className="cg-inspector__open">
+          <span className="cg-muted">Open in</span>
+          {EDITORS.map(({ editor, label }) => (
+            <a key={editor} className="cg-link" href={editorUrl(editor, root, node.file!, node.line)}>
+              {label}
+            </a>
+          ))}
+        </p>
       )}
       <p>
         <button

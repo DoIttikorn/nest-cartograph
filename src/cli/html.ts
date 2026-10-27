@@ -17,8 +17,19 @@ export function readUi(): string {
  * The UI reads `window.__CARTOGRAPH__` before it tries to fetch `./cartograph.json`.
  */
 export function renderHtml(map: Cartograph): string {
-  const html = readUi();
-  const script = `<script>window.__CARTOGRAPH__ = ${safeJson(map)};</script>`;
+  return withScript(readUi(), `window.__CARTOGRAPH__ = ${safeJson(map)};`);
+}
+
+/**
+ * The UI as `view` serves it, with the absolute project folder so file paths can open in VS Code or Zed.
+ * Only for the local server: a written HTML file is shared, and must not carry paths from this machine.
+ */
+export function renderServedHtml(projectFolder: string): string {
+  return withScript(readUi(), `window.__CARTOGRAPH_ROOT__ = ${safeJson(projectFolder)};`);
+}
+
+function withScript(html: string, code: string): string {
+  const script = `<script>${code}</script>`;
   // Insert right after the opening <head> tag: it comes before the inlined bundle, whose code
   // may itself contain the text "</head>". A classic script runs before the deferred module one.
   const head = /<head[^>]*>/i.exec(html);

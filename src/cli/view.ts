@@ -1,10 +1,11 @@
 import { spawn } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
+import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { SCHEMA_VERSION, type Cartograph } from '../schema.js';
 import { DEFAULT_JSON, toJson } from './analyze.js';
-import { readUi, renderHtml } from './html.js';
+import { renderHtml, renderServedHtml } from './html.js';
 
 export interface ViewOptions {
   port: number;
@@ -54,7 +55,8 @@ export function parsePort(value: string): number {
 
 /** Serve the UI and the map on 127.0.0.1 until Ctrl+C. Falls back to a free port when the chosen one is taken. */
 export async function serve(map: Cartograph, options: ViewOptions): Promise<void> {
-  const html = readUi();
+  // `project.root` is relative to where the analyzer ran, which is taken to be here.
+  const html = renderServedHtml(path.resolve(map.project.root));
   const json = toJson(map);
   const server = createServer((request, response) => {
     const path = new URL(request.url ?? '/', 'http://localhost').pathname;

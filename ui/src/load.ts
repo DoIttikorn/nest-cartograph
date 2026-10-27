@@ -4,7 +4,14 @@ declare global {
   interface Window {
     /** Set by `nest-cartograph view -o file.html`, which embeds the map in the page. */
     __CARTOGRAPH__?: unknown;
+    /** Set by `nest-cartograph view` when it serves the page: the absolute folder file paths are relative to. */
+    __CARTOGRAPH_ROOT__?: string;
   }
+}
+
+/** The absolute project folder, known only when the page is served by `nest-cartograph view`. */
+export function projectFolder(): string | undefined {
+  return typeof window.__CARTOGRAPH_ROOT__ === 'string' ? window.__CARTOGRAPH_ROOT__ : undefined;
 }
 
 /**

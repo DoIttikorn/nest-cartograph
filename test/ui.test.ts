@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { editorUrl } from '../ui/src/editor.js';
 import { focus, layerOf, type FocusOptions, type Layer } from '../ui/src/focus.js';
 import { layout } from '../ui/src/layout.js';
 import { parseCartograph } from '../ui/src/load.js';
@@ -130,5 +131,20 @@ describe('focus', () => {
     expect(layerOf(node('PayrollReportIntegration'))).toBe('external');
     expect(layerOf(node('AppConfigService'))).toBe('infra');
     expect(layerOf(node('ReportService'))).toBe('service');
+  });
+});
+
+describe('editorUrl', () => {
+  it('opens the file at its line in VS Code or Zed', () => {
+    expect(editorUrl('vscode', '/work/api', 'src/users/users.service.ts', 12)).toBe('vscode://file/work/api/src/users/users.service.ts:12');
+    expect(editorUrl('zed', '/work/api/', './src/app.module.ts')).toBe('zed://file/work/api/src/app.module.ts');
+  });
+
+  it('resolves "..", Windows paths and characters a URL would misread', () => {
+    expect(editorUrl('vscode', '/work/api', '../node_modules/@nestjs/config/index.d.ts', 3)).toBe(
+      'vscode://file/work/node_modules/@nestjs/config/index.d.ts:3',
+    );
+    expect(editorUrl('zed', 'C:\\work\\api', 'src/a.ts', 1)).toBe('zed://file/C:/work/api/src/a.ts:1');
+    expect(editorUrl('vscode', '/my work/#1', 'a.ts')).toBe('vscode://file/my%20work/%231/a.ts');
   });
 });
