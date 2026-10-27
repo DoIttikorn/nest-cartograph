@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>nest-cartograph — map a NestJS app from its source code</title>
+    <meta
+      name="description"
+      content="Map a NestJS app's modules, providers and injections straight from its TypeScript source, then explore the map in your browser."
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <a class="nav__brand" href="./"><img src="favicon.svg" alt="" width="22" height="22" />nest-cartograph</a>
+      <nav>
+        <a href="#demo">Demo</a>
+        <a href="https://github.com/DoIttikorn/nest-cartograph#readme">Docs</a>
+        <a href="https://www.npmjs.com/package/nest-cartograph">npm</a>
+        <a href="https://github.com/DoIttikorn/nest-cartograph">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">v{{version}} · MIT · Node.js 22+</p>
+        <h1>Map your NestJS app<br />from its source code</h1>
+        <p class="lead">
+          Modules, providers, controllers and who injects what — read by the TypeScript compiler, the same way your editor
+          does. Nothing in your app runs: no database, no environment variables, no build.
+        </p>
+        <div class="command">
+          <code id="install">npx nest-cartograph</code>
+          <button type="button" class="copy" data-copy="install" aria-label="Copy the command">Copy</button>
+        </div>
+        <p class="actions">
+          <a class="button" href="#demo">Try the live demo</a>
+          <a class="button button--quiet" href="https://github.com/DoIttikorn/nest-cartograph#readme">Read the docs</a>
+        </p>
+      </section>
+
+      <section id="demo" class="demo">
+        <div class="demo__head">
+          <h2>Live demo</h2>
+          <a href="demo.html" target="_blank" rel="noopener">Open full screen ↗</a>
+        </div>
+        <p class="muted">
+          The map of the test app in this repository, drawn by v{{version}}. Type <code>UsersService</code> in the search box
+          and press <kbd>Enter</kbd> to follow its flow, or click any node for its details.
+        </p>
+        <iframe src="demo.html" title="nest-cartograph demo: the map of a small NestJS app" loading="lazy"></iframe>
+      </section>
+
+      <section>
+        <h2>Two steps</h2>
+        <ol class="steps">
+          <li>
+            <span class="steps__n">1</span>
+            <h3>Analyze</h3>
+            <pre><code>npx nest-cartograph analyze</code></pre>
+            <p>Reads your <code>tsconfig.json</code> and writes <code>cartograph.json</code>. It is deterministic — no timestamps, everything sorted — so you can commit it and review architecture changes in a pull request.</p>
+          </li>
+          <li>
+            <span class="steps__n">2</span>
+            <h3>View</h3>
+            <pre><code>npx nest-cartograph view</code></pre>
+            <p>Opens an interactive map in your browser. Or write one self-contained HTML file with <code>-o map.html</code> and share it — no server needed.</p>
+          </li>
+        </ol>
+        <p class="muted">Run <code>npx nest-cartograph</code> with no command to do both, without writing the JSON.</p>
+      </section>
+
+      <section>
+        <h2>What you get</h2>
+        <ul class="features">
+          <li>
+            <h3>Follow one flow</h3>
+            <p>Search a name and see only what it calls and what calls it, from controllers down to repositories and Kafka producers.</p>
+          </li>
+          <li>
+            <h3>Catch circular imports</h3>
+            <p>Modules that import each other are flagged. <code>--fail-on-cycles</code> fails CI when one is not wrapped in <code>forwardRef()</code>.</p>
+          </li>
+          <li>
+            <h3>Jump to the code</h3>
+            <p>On a map served by <code>view</code>, open any module, provider or controller at its line in VS Code or Zed.</p>
+          </li>
+          <li>
+            <h3>Custom providers</h3>
+            <p><code>useClass</code>, <code>useValue</code>, <code>useFactory</code>, <code>useExisting</code>, string and symbol tokens, <code>forRoot()</code> modules.</p>
+          </li>
+          <li>
+            <h3>Arrays across files</h3>
+            <p>Providers spread from constants such as <code>[...SHARED_PROVIDERS]</code> are followed into the files that define them.</p>
+          </li>
+          <li>
+            <h3>Any TypeScript</h3>
+            <p>The analyzer brings its own TypeScript, so it reads your code whatever version your project uses.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Commands</h2>
+        <pre class="block"><code><span class="comment"># source code → cartograph.json</span>
+npx nest-cartograph analyze -p apps/api/tsconfig.json -o docs/cartograph.json
+npx nest-cartograph analyze --fail-on-cycles
+
+<span class="comment"># cartograph.json → map</span>
+npx nest-cartograph view docs/cartograph.json --port 5055
+npx nest-cartograph view -o cartograph.html</code></pre>
+      </section>
+    </main>
+
+    <footer>
+      <span>nest-cartograph v{{version}} · MIT</span>
+      <a href="https://github.com/DoIttikorn/nest-cartograph/issues">Report an issue</a>
+    </footer>
+
+    <script>
+      for (const button of document.querySelectorAll('[data-copy]')) {
+        button.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(document.getElementById(button.dataset.copy).textContent);
+            button.textContent = 'Copied';
+          } catch {
+            button.textContent = 'Press ⌘C';
+          }
+          setTimeout(() => (button.textContent = 'Copy'), 1500);
+        });
+      }
+    </script>
+  </body>
+</html>

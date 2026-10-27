@@ -1,0 +1,321 @@
+/* Same palette as the map (ui/src/styles.css), so the site and the demo read as one product. */
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-2: #f1f1ee;
+  --text: #1c1c1a;
+  --muted: #6b6b66;
+  --line: #dcdcd6;
+  --accent: #4f46e5;
+  --accent-text: #ffffff;
+  --accent-soft: rgba(79, 70, 229, 0.08);
+  --controller: #b45309;
+  --db: #059669;
+  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121211;
+    --surface: #1b1b19;
+    --surface-2: #242421;
+    --text: #ececE8;
+    --muted: #9b9b94;
+    --line: #34342f;
+    --accent: #a5b4fc;
+    --accent-text: #121211;
+    --accent-soft: rgba(165, 180, 252, 0.08);
+    --controller: #fbbf24;
+    --db: #34d399;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 var(--font);
+}
+
+a {
+  color: var(--accent);
+}
+
+code,
+kbd,
+pre {
+  font-family: var(--mono);
+  font-size: 0.875em;
+}
+
+:not(pre) > code,
+kbd {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--surface-2);
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+h2 {
+  margin: 0 0 16px;
+  font-size: 24px;
+}
+
+h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ---- layout ------------------------------------------------------------------------------ */
+
+.nav,
+main,
+footer {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+main > section {
+  padding: 48px 0;
+  border-top: 1px solid var(--line);
+}
+
+main > section.hero {
+  border-top: 0;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.nav nav {
+  display: flex;
+  gap: 20px;
+}
+
+.nav nav a {
+  color: var(--muted);
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.nav nav a:hover {
+  color: var(--text);
+}
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 24px;
+  padding-bottom: 32px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---- hero -------------------------------------------------------------------------------- */
+
+.hero {
+  padding-top: 56px;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.hero h1 {
+  margin: 0 0 16px;
+  font-size: clamp(32px, 6vw, 52px);
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  max-width: 640px;
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.command {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  gap: 12px;
+  padding: 8px 8px 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.command code {
+  overflow-x: auto;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.command code::before {
+  content: '$ ';
+  color: var(--muted);
+}
+
+.copy {
+  flex: none;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0 0;
+}
+
+.button {
+  padding: 10px 18px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.button--quiet {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* ---- demo -------------------------------------------------------------------------------- */
+
+.demo__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.demo__head h2 {
+  margin: 0;
+}
+
+.demo iframe {
+  display: block;
+  width: 100%;
+  height: min(640px, 75vh);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+/* ---- steps and features ------------------------------------------------------------------ */
+
+.steps,
+.features {
+  display: grid;
+  gap: 16px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.steps {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.features {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.steps li,
+.features li {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.steps p,
+.features p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.steps__n {
+  display: inline-grid;
+  width: 26px;
+  height: 26px;
+  margin-bottom: 8px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.steps pre {
+  margin: 8px 0 12px;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+pre.block {
+  margin: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  line-height: 1.7;
+}
+
+.comment {
+  color: var(--muted);
+}

@@ -119,6 +119,7 @@ npm run lint        # oxlint
 npm run typecheck   # src + test, and ui/
 npm run build       # tsc → dist/, then vite → dist/ui/index.html
 npm run dev:ui      # UI with hot reload, on the fixture app's map
+npm run build:website  # website/ → website/dist, with the fixture app's map as the live demo
 node dist/cli/index.js -p test/fixtures/tsconfig.json   # try the built CLI
 ```
 

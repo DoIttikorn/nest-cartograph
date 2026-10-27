@@ -43,6 +43,7 @@
     "build": "npm run build:cli && npm run build:ui",
     "build:cli": "tsc -p tsconfig.build.json",
     "build:ui": "vite build --config ui/vite.config.ts",
+    "build:website": "npm run build && node website/build.mjs",
     "dev:ui": "npm run build:cli && node dist/cli/index.js analyze -p test/fixtures/tsconfig.json -o ui/public/cartograph.json && vite --config ui/vite.config.ts",
     "test": "vitest run",
     "test:update": "vitest run -u",
