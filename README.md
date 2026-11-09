@@ -121,6 +121,7 @@ Node.js 22 or later. The analyzer brings its own TypeScript 6, so it works whate
 
 ```bash
 npm install
+npm run check       # everything CI and the release run: lint, typecheck, test, build, package checks, CLI on the fixture app
 npm test            # analyzer golden test + UI logic tests (vitest)
 npm run test:update # rewrite test/testdata/app.golden.json after an intended change
 npm run lint        # oxlint
@@ -147,7 +148,7 @@ test/
   testdata/     golden output
 ```
 
-Releases: bump `version` in package.json, commit, then `git tag v0.1.0 && git push --tags`. The release workflow publishes with npm Trusted Publishing. The very first version has to be published by hand (`npm publish`), because the Trusted Publisher setting lives on the package's page on npmjs.com.
+Releases: `npm version patch` (or `minor`) commits the bump as `x.y.z` and tags it `vx.y.z`; then `git push origin main && git push origin vx.y.z`. The tag starts the release workflow, which runs `npm run check` and publishes with npm Trusted Publishing. Follow it with `gh run watch`, then confirm with `npm view nest-cartograph version`. The very first version has to be published by hand (`npm publish`), because the Trusted Publisher setting lives on the package's page on npmjs.com.
 
 ## License
 

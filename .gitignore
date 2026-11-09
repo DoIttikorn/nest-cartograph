@@ -6,5 +6,6 @@ coverage/
 .DS_Store
 # written by `npm run dev:ui`
 ui/public/cartograph.json
-# written by `npx nest-cartograph analyze` when trying the CLI on this repo
+# written by `npm run check:dogfood`, or `npx nest-cartograph analyze` when trying the CLI on this repo
 /cartograph.json
+/cartograph.html

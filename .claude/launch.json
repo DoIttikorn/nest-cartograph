@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "map",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "npm run build && node dist/cli/index.js -p test/fixtures/tsconfig.json --no-open --port 4391"],
+      "port": 4391,
+      "url": "http://127.0.0.1:4391"
+    },
+    {
+      "name": "website",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "npm run build:website && python3 -m http.server 4392 --bind 127.0.0.1 --directory website/dist"],
+      "port": 4392,
+      "url": "http://127.0.0.1:4392"
+    }
+  ]
+}

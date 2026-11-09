@@ -47,9 +47,11 @@
     "dev:ui": "npm run build:cli && node dist/cli/index.js analyze -p test/fixtures/tsconfig.json -o ui/public/cartograph.json && vite --config ui/vite.config.ts",
     "test": "vitest run",
     "test:update": "vitest run -u",
-    "lint": "oxlint src ui/src test",
+    "lint": "oxlint src ui/src test website",
     "typecheck": "tsc -p tsconfig.json && tsc -p ui/tsconfig.json",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build && npm run check:pkg && npm run check:dogfood",
     "check:pkg": "publint && attw --pack . --profile esm-only",
+    "check:dogfood": "node dist/cli/index.js analyze -p test/fixtures/tsconfig.json -o cartograph.json --fail-on-cycles && node dist/cli/index.js view cartograph.json -o cartograph.html",
     "prepublishOnly": "npm run build && npm run check:pkg"
   },
   "dependencies": {

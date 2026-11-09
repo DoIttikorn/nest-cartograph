@@ -24,7 +24,8 @@ jobs:
       # Trusted Publishing needs a recent npm CLI.
       - run: npm install -g npm@latest
       - run: npm ci
-      - run: npm test
       - name: Check the tag matches package.json
         run: test "v$(node -p 'require(`./package.json`).version')" = "$GITHUB_REF_NAME"
+      # Everything CI runs. This job does not wait for CI on the same commit, so it checks for itself.
+      - run: npm run check
       - run: npm publish # prepublishOnly builds and runs publint + attw

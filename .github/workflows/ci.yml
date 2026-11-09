@@ -22,11 +22,6 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
-      - run: npm run check:pkg
-      # Dogfood the built CLI on the fixture app: both steps, no browser.
-      - run: node dist/cli/index.js analyze -p test/fixtures/tsconfig.json -o cartograph.json --fail-on-cycles
-      - run: node dist/cli/index.js view cartograph.json -o cartograph.html
+      # lint, typecheck, test, build, package checks, then the built CLI on the fixture app.
+      # Release runs the same script, so a tag cannot publish what CI would reject.
+      - run: npm run check
