@@ -1,5 +1,13 @@
 # nest-cartograph
 
+[![CI](https://github.com/DoIttikorn/nest-cartograph/actions/workflows/ci.yml/badge.svg)](https://github.com/DoIttikorn/nest-cartograph/actions/workflows/ci.yml)
+[![Website](https://github.com/DoIttikorn/nest-cartograph/actions/workflows/website.yml/badge.svg)](https://github.com/DoIttikorn/nest-cartograph/actions/workflows/website.yml)
+[![npm version](https://img.shields.io/npm/v/nest-cartograph)](https://www.npmjs.com/package/nest-cartograph)
+[![npm downloads](https://img.shields.io/npm/dm/nest-cartograph)](https://www.npmjs.com/package/nest-cartograph)
+[![Node](https://img.shields.io/node/v/nest-cartograph)](package.json)
+[![License: MIT](https://img.shields.io/npm/l/nest-cartograph)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-live-2ea44f)](https://doittikorn.github.io/nest-cartograph/)
+
 Map a NestJS app — modules, providers, controllers and who injects what — straight from its TypeScript source, then explore the map in your browser.
 
 ```bash
